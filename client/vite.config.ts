@@ -9,7 +9,7 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       injectRegister: "auto",
-      includeAssets: ["favicon.svg", "icons/icon.svg"],
+      includeAssets: ["favicon.png", "icons/icon.png"],
       manifest: {
         name: "uv.tv — TV Series Tracker",
         short_name: "uv.tv",
@@ -22,16 +22,10 @@ export default defineConfig({
         scope: "/",
         icons: [
           {
-            src: "/icons/icon.svg",
-            sizes: "any",
-            type: "image/svg+xml",
-            purpose: "any"
-          },
-          {
-            src: "/icons/icon.svg",
-            sizes: "any",
-            type: "image/svg+xml",
-            purpose: "maskable"
+            src: "/icons/icon.png",
+            sizes: "768x768",
+            type: "image/png",
+            purpose: "any maskable"
           }
         ]
       },
