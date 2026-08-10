@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" fill="#000000"/>
+  <!-- Outer Box -->
+  <rect x="106" y="86" width="300" height="300" rx="8" fill="none" stroke="#4ade80" stroke-width="12"/>
+  <!-- Atomic Number -->
+  <text x="370" y="126" font-family="monospace" font-size="48" fill="#4ade80" text-anchor="end">35</text>
+  <!-- Symbol Br -->
+  <text x="256" y="270" font-family="monospace" font-size="148" fill="#4ade80" text-anchor="middle" font-weight="bold">Br</text>
+  <!-- Name -->
+  <text x="150" y="348" font-family="monospace" font-size="38" fill="#4ade80">Bromine</text>
+  <!-- Atomic Weight -->
+  <text x="362" y="348" font-family="monospace" font-size="38" fill="#4ade80" text-anchor="end">79.9</text>
+  <!-- uv.tv label -->
+  <text x="256" y="450" font-family="monospace" font-size="42" fill="#ffffff" text-anchor="middle" font-weight="bold">uv.tv</text>
+</svg>
