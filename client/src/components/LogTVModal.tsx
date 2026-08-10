@@ -39,12 +39,14 @@ export default function LogTVModal({
   const [platform, setPlatform] = useState<OTTPlatform>(initialPlatform);
   const [season, setSeason] = useState<number>(initialSeason);
   const [episode, setEpisode] = useState<number>(initialEpisode);
+  const [watchedAt, setWatchedAt] = useState<string>(new Date().toISOString().slice(0, 10));
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     setPlatform(initialPlatform || "netflix");
     setSeason(initialSeason || 1);
     setEpisode(initialEpisode || 1);
+    setWatchedAt(new Date().toISOString().slice(0, 10));
   }, [initialPlatform, initialSeason, initialEpisode, isOpen]);
 
   if (!isOpen) return null;
@@ -59,7 +61,8 @@ export default function LogTVModal({
         tmdbId: series.tmdbId,
         platform,
         currentSeason: season,
-        currentEpisode: episode
+        currentEpisode: episode,
+        watchedAt: watchedAt ? new Date(watchedAt).toISOString() : undefined
       });
       onSuccess();
       onClose();
@@ -152,6 +155,19 @@ export default function LogTVModal({
                   className="w-full bg-base-950 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-accent-orange transition-colors"
                 />
               </div>
+            </div>
+
+            {/* Watched Date */}
+            <div>
+              <label className="block text-xs font-semibold text-zinc-300 mb-1.5">📅 Date Started Watching</label>
+              <input
+                type="date"
+                value={watchedAt}
+                max={new Date().toISOString().slice(0, 10)}
+                onChange={(e) => setWatchedAt(e.target.value)}
+                className="w-full bg-base-950 border border-white/10 rounded-xl p-3 text-sm text-white focus:outline-none focus:border-accent-orange transition-colors"
+              />
+              <p className="text-[10px] text-zinc-500 mt-1">This date will be used as the watch date for this episode.</p>
             </div>
 
             {/* Action Buttons */}

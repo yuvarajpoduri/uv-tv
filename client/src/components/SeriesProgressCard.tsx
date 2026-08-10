@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Plus, Minus, Star, ChevronRight } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Plus, Minus, Star, ChevronRight, Calendar, Check, X } from "lucide-react";
 import { WatchProgress } from "../types";
 import { tmdbImage, platformLabel, platformBadgeColor } from "../lib/utils";
 import { api } from "../lib/api";
@@ -19,6 +19,9 @@ export default function SeriesProgressCard({
 }: SeriesProgressCardProps) {
   const [incrementing, setIncrementing] = useState(false);
   const [decrementing, setDecrementing] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [watchedAt, setWatchedAt] = useState<string>(new Date().toISOString().slice(0, 10));
+  const dateInputRef = useRef<HTMLInputElement>(null);
   const series = progress.seriesId;
 
   const currentEp = progress.currentEpisode || 1;
@@ -43,14 +46,22 @@ export default function SeriesProgressCard({
   const isSeasonComplete = currentEp >= totalEpInSeason;
   const currentSeasonRating = progress.seasonRatings?.find((sr) => sr.seasonNumber === currentSeason);
 
-  async function handleIncrement(e: React.MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
+  // Reset date to today whenever picker opens
+  useEffect(() => {
+    if (showDatePicker) {
+      setWatchedAt(new Date().toISOString().slice(0, 10));
+      setTimeout(() => dateInputRef.current?.focus(), 100);
+    }
+  }, [showDatePicker]);
+
+  async function handleIncrement(customDate?: string) {
     if (incrementing) return;
     setIncrementing(true);
-
+    setShowDatePicker(false);
     try {
-      const { data } = await api.put(`/progress/${progress.tmdbId}/increment`);
+      const { data } = await api.put(`/progress/${progress.tmdbId}/increment`, {
+        watchedAt: customDate ? new Date(customDate).toISOString() : undefined
+      });
       onUpdate(data.progress, data.promptSeasonRatingNumber);
     } catch (err) {
       console.error("Failed to increment episode", err);
@@ -152,6 +163,44 @@ export default function SeriesProgressCard({
             </div>
           </div>
 
+          {/* Inline Date Picker for +1 Ep */}
+          <AnimatePresence>
+            {showDatePicker && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mb-2 overflow-hidden"
+              >
+                <div className="flex items-center gap-1.5 p-2 rounded-xl bg-base-950 border border-accent-orange/30">
+                  <Calendar className="w-3.5 h-3.5 text-accent-orange shrink-0" />
+                  <input
+                    ref={dateInputRef}
+                    type="date"
+                    value={watchedAt}
+                    max={new Date().toISOString().slice(0, 10)}
+                    onChange={(e) => setWatchedAt(e.target.value)}
+                    className="flex-1 bg-transparent text-xs text-white focus:outline-none"
+                  />
+                  <button
+                    onClick={() => handleIncrement(watchedAt)}
+                    className="p-1 rounded-lg bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 transition-colors"
+                    title="Confirm"
+                  >
+                    <Check className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    onClick={() => setShowDatePicker(false)}
+                    className="p-1 rounded-lg bg-base-800 text-zinc-400 hover:text-white transition-colors"
+                    title="Cancel"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* Action Buttons */}
           <div className="flex items-center gap-1.5 pt-0.5">
             {/* Quick -1 Episode Button */}
@@ -165,9 +214,13 @@ export default function SeriesProgressCard({
               <span>-1 Ep</span>
             </button>
 
-            {/* Quick +1 Episode Button */}
+            {/* Quick +1 Episode Button — click opens date picker */}
             <button
-              onClick={handleIncrement}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setShowDatePicker((v) => !v);
+              }}
               disabled={incrementing}
               className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2.5 rounded-xl bg-accent-orange/20 hover:bg-accent-orange/30 text-accent-orange border border-accent-orange/30 text-xs font-semibold transition-all active:scale-95 disabled:opacity-50"
             >

@@ -16,7 +16,9 @@ import {
   Clock,
   PauseCircle,
   RotateCcw,
-  Trash2
+  Trash2,
+  Calendar,
+  Check
 } from "lucide-react";
 import { api } from "../lib/api";
 import { tmdbImage, formatDate } from "../lib/utils";
@@ -51,6 +53,8 @@ export default function ShowDetailsPage() {
   const [expandedSeason, setExpandedSeason] = useState<number | null>(1);
   const [seasonEpisodes, setSeasonEpisodes] = useState<Record<number, Episode[]>>({});
   const [loadingEpisodes, setLoadingEpisodes] = useState<Record<number, boolean>>({});
+  const [showIncrementDatePicker, setShowIncrementDatePicker] = useState(false);
+  const [incrementWatchedAt, setIncrementWatchedAt] = useState<string>(new Date().toISOString().slice(0, 10));
 
   const load = useCallback(async () => {
     if (!tmdbId) return;
@@ -117,10 +121,13 @@ export default function ShowDetailsPage() {
     setRatingModalOpen(true);
   }
 
-  async function handleQuickIncrement() {
+  async function handleQuickIncrement(customDate?: string) {
     if (!progress) return;
+    setShowIncrementDatePicker(false);
     try {
-      const { data } = await api.put(`/progress/${idNum}/increment`);
+      const { data } = await api.put(`/progress/${idNum}/increment`, {
+        watchedAt: customDate ? new Date(customDate).toISOString() : undefined
+      });
       setProgress(data.progress);
       if (data.promptSeasonRatingNumber) {
         openRateSeason(data.promptSeasonRatingNumber);
@@ -335,7 +342,10 @@ export default function ShowDetailsPage() {
           <ActionButton
             icon={progress ? <Plus size={16} /> : <Tv size={16} />}
             label={progress ? "+1 Episode Watched" : "Start Tracking Series"}
-            onClick={progress ? handleQuickIncrement : () => setLogModalOpen(true)}
+            onClick={progress ? () => {
+              setIncrementWatchedAt(new Date().toISOString().slice(0, 10));
+              setShowIncrementDatePicker((v) => !v);
+            } : () => setLogModalOpen(true)}
             primary
           />
           {inWatchlist ? (
@@ -352,6 +362,36 @@ export default function ShowDetailsPage() {
             />
           )}
         </div>
+
+        {/* Inline date picker for +1 Ep */}
+        <AnimatePresence>
+          {showIncrementDatePicker && progress && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mt-2 overflow-hidden"
+            >
+              <div className="flex items-center gap-2 p-3 rounded-2xl bg-base-950 border border-accent-orange/30">
+                <Calendar size={14} className="text-accent-orange shrink-0" />
+                <span className="text-xs text-white/60">Watched on:</span>
+                <input
+                  type="date"
+                  value={incrementWatchedAt}
+                  max={new Date().toISOString().slice(0, 10)}
+                  onChange={(e) => setIncrementWatchedAt(e.target.value)}
+                  className="flex-1 bg-transparent text-xs text-white focus:outline-none"
+                />
+                <button
+                  onClick={() => handleQuickIncrement(incrementWatchedAt)}
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-accent-orange text-white text-xs font-bold hover:opacity-90 transition-all active:scale-95"
+                >
+                  <Check size={12} /> Log
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Series management options when tracking */}
         {progress && (

@@ -20,7 +20,7 @@ function calculateTotalWatchedCount(currentSeason: number, currentEpisode: numbe
   return count;
 }
 
-function syncEpisodeLogs(progress: any, series: any) {
+function syncEpisodeLogs(progress: any, series: any, watchedAt?: Date) {
   if (!progress.episodeLogs) progress.episodeLogs = [];
   const targetCount = calculateTotalWatchedCount(
     progress.currentSeason,
@@ -29,13 +29,15 @@ function syncEpisodeLogs(progress: any, series: any) {
   );
 
   if (progress.episodeLogs.length > targetCount) {
+    // Trim — user went backwards (decrement)
     progress.episodeLogs = progress.episodeLogs.slice(0, targetCount);
   } else {
+    // Append — user went forwards; use provided date or now
     while (progress.episodeLogs.length < targetCount) {
       progress.episodeLogs.push({
         seasonNumber: progress.currentSeason,
         episodeNumber: progress.currentEpisode,
-        watchedAt: new Date()
+        watchedAt: watchedAt || new Date()
       });
     }
   }
@@ -70,7 +72,7 @@ export async function getProgressByTmdbId(req: AuthRequest, res: Response) {
 }
 
 export async function startTracking(req: AuthRequest, res: Response) {
-  const { tmdbId, platform, currentSeason = 1, currentEpisode = 1 } = req.body;
+  const { tmdbId, platform, currentSeason = 1, currentEpisode = 1, watchedAt } = req.body;
   if (!tmdbId) {
     res.status(400).json({ message: "tmdbId is required" });
     return;
@@ -92,8 +94,8 @@ export async function startTracking(req: AuthRequest, res: Response) {
     progress.currentSeason = currentSeason;
     progress.currentEpisode = currentEpisode;
     progress.totalEpisodesInCurrentSeason = seasonEpCount;
-    progress.lastWatchedAt = new Date();
-    syncEpisodeLogs(progress, series);
+    progress.lastWatchedAt = watchedAt ? new Date(watchedAt) : new Date();
+    syncEpisodeLogs(progress, series, watchedAt ? new Date(watchedAt) : undefined);
     await progress.save();
   } else {
     progress = new WatchProgress({
@@ -107,10 +109,10 @@ export async function startTracking(req: AuthRequest, res: Response) {
       totalEpisodesInCurrentSeason: seasonEpCount,
       seasonRatings: [],
       episodeLogs: [],
-      startedAt: new Date(),
-      lastWatchedAt: new Date()
+      startedAt: watchedAt ? new Date(watchedAt) : new Date(),
+      lastWatchedAt: watchedAt ? new Date(watchedAt) : new Date()
     });
-    syncEpisodeLogs(progress, series);
+    syncEpisodeLogs(progress, series, watchedAt ? new Date(watchedAt) : undefined);
     await progress.save();
   }
 
@@ -123,7 +125,7 @@ export async function startTracking(req: AuthRequest, res: Response) {
 
 export async function updateProgress(req: AuthRequest, res: Response) {
   const tmdbId = Number(req.params.tmdbId);
-  const { currentSeason, currentEpisode, platform, status, isFavorite, notes } = req.body;
+  const { currentSeason, currentEpisode, platform, status, isFavorite, notes, watchedAt } = req.body;
 
   const series = await Series.findOne({ tmdbId });
   if (!series) {
@@ -152,8 +154,8 @@ export async function updateProgress(req: AuthRequest, res: Response) {
     progress.currentEpisode = currentEpisode;
   }
 
-  // Sync episode logs to match current episode & season
-  syncEpisodeLogs(progress, series);
+  // Sync episode logs with custom date
+  syncEpisodeLogs(progress, series, watchedAt ? new Date(watchedAt) : undefined);
 
   // Update total episodes in current season if season changed or zero
   if (seasonChanged || !progress.totalEpisodesInCurrentSeason) {
@@ -189,6 +191,7 @@ export async function updateProgress(req: AuthRequest, res: Response) {
 
 export async function incrementEpisode(req: AuthRequest, res: Response) {
   const tmdbId = Number(req.params.tmdbId);
+  const { watchedAt } = req.body || {};
 
   const series = await Series.findOne({ tmdbId });
   if (!series) {
@@ -233,8 +236,9 @@ export async function incrementEpisode(req: AuthRequest, res: Response) {
     progress.currentEpisode = nextEp;
   }
 
-  // Sync episode logs to match current episode & season
-  syncEpisodeLogs(progress, series);
+  // Sync episode logs with custom date
+  syncEpisodeLogs(progress, series, watchedAt ? new Date(watchedAt) : undefined);
+
 
   progress.lastWatchedAt = new Date();
   await progress.save();
