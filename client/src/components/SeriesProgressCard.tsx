@@ -211,7 +211,7 @@ export default function SeriesProgressCard({
               title="Decrease Episode (-1)"
             >
               <Minus className="w-3.5 h-3.5" />
-              <span>-1 Ep</span>
+              <span>1 Ep</span>
             </button>
 
             {/* Quick +1 Episode Button — click opens date picker */}
@@ -225,7 +225,7 @@ export default function SeriesProgressCard({
               className="flex-1 flex items-center justify-center gap-1 py-1.5 px-2.5 rounded-xl bg-accent-orange/20 hover:bg-accent-orange/30 text-accent-orange border border-accent-orange/30 text-xs font-semibold transition-all active:scale-95 disabled:opacity-50"
             >
               <Plus className="w-3.5 h-3.5" />
-              <span>{incrementing ? "..." : "+1 Ep"}</span>
+              <span>{incrementing ? "..." : "1 Ep"}</span>
             </button>
 
             {/* Rate Season Button / Prompt */}

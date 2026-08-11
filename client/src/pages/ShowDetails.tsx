@@ -341,7 +341,7 @@ export default function ShowDetailsPage() {
         <div className="grid grid-cols-2 gap-3 mt-6">
           <ActionButton
             icon={progress ? <Plus size={16} /> : <Tv size={16} />}
-            label={progress ? "+1 Episode Watched" : "Start Tracking Series"}
+            label={progress ? "1 Episode Watched" : "Start Tracking Series"}
             onClick={progress ? () => {
               setIncrementWatchedAt(new Date().toISOString().slice(0, 10));
               setShowIncrementDatePicker((v) => !v);
